@@ -17,9 +17,6 @@ dashboard = NetworkTables.getTable("SmartDashboard")
 areaFilter = (0.005)
 quality = 0.2
 
-#HSV FILTER
-lower_green = np.array([39,0,234]) #H,S,V
-upper_green = np.array([180, 140, 255]) #H,S,V
 
 #parse args
 ap = argparse.ArgumentParser("Team 3997's vision program for 2017 FRC game. runs on rPi")
@@ -37,10 +34,11 @@ i = 0
 def main():
     global cam
     global image
+    global lower_green
+    global upper_green
 
     if args.webcam is not None:
         cam = cv2.VideoCapture(0)
-        cam.set(CV_CAP_PROP_EXPOSURE, 1)
 	cam.read()
     elif args.image is not None:
         image = cv2.imread(args.image[0])
@@ -51,9 +49,18 @@ def main():
 
     main_count = 0
     while(True):
+        H_LOW = dashboard.getNumber("H_LOW", 39);
+        H_HIGH = dashboard.getNumber("H_HIGH", 180);
+        S_LOW = dashboard.getNumber("S_LOW", 0);
+        S_HIGH = dashboard.getNumber("S_HIGH", 130);
+        V_LOW = dashboard.getNumber("V_LOW", 234);
+        V_HIGH = dashboard.getNumber("V_HIGH", 255);
+        lower_green = np.array([H_LOW,S_LOW,V_LOW]) #H,S,V
+        upper_green = np.array([H_HIGH, S_HIGH, V_HIGH]) #H,S,V
+        
         dashboard.putNumber('piCount:', time.clock())
         main_count += 1
-        if is_processing():
+        if True:
             show_webcam()
         else:
             time.sleep(0.3)
@@ -85,6 +92,8 @@ def show_webcam():
     #    print('DEBUG_FPGATimestamp:', dashboard.getNumber('DEBUG_FPGATimestamp'))
     #except:
     #    print('DEBUG_FPGATimestamp: N/A')
+    image = cv2.transpose(image)
+    image = cv2.flip(image, flipCode=0)
 
 
     imgHeight, imgWidth, channels = image.shape
@@ -149,8 +158,8 @@ def show_webcam():
 
 
     #show the image
-    #cv2.imshow('Webcam',image)
-    #cv2.imshow('Filtered',thresh)
+    cv2.imshow('Webcam',image)
+    cv2.imshow('Filtered',thresh)
 
     small = cv2.resize(image, (0,0), fx=quality, fy=quality)
     smallbinary = cv2.resize(thresh, (0,0), fx=quality, fy=quality)
